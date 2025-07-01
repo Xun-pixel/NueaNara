@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <title>To-Do List 7 พร้อมติ้ก 3 สถานะ และเพิ่มรูปภาพ (บันทึกอัตโนมัติ)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit&display=swap');
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: #f0f4ff;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .container {
+      width: 280px;
+      height: 650px;
+      position: relative;
+      margin-bottom: 16px;
+      transition: width 0.4s ease, height 0.4s ease;
+      overflow: hidden;
+    }
+
+    .container.overview {
+      width: 100%;
+      height: auto;
+      display: flex;
+      overflow-x: auto;
+      padding-bottom: 12px;
+    }
+
+    .todo-column {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 250px;
+      padding: 16px;
+      box-sizing: border-box;
+      flex-direction: column;
+      max-height: 100%;
+      overflow: hidden;
+      user-select: none;
+      transition: transform 0.3s ease;
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .todo-column.active {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .container.overview .todo-column {
+      display: flex !important;
+      position: relative !important;
+      transform: none !important;
+      margin-right: 12px;
+    }
+
+    .todo-column h2 {
+      text-align: center;
+      margin: 0 0 12px 0;
+      color: #4a3aff;
+      font-weight: 700;
+    }
+
+    .checkbox-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 40px;
+      margin: 0 auto 12px auto;
+      cursor: pointer;
+      border: 2.5px solid #4a3aff;
+      border-radius: 8px;
+      background: white;
+      box-sizing: border-box;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      margin: 0;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 2;
+    }
+
+    .checkbox-wrapper[data-state="0"] {
+      background-color: white;
+      border-color: #4a3aff;
+    }
+    .checkbox-wrapper[data-state="1"] {
+      background-color: #4caf50;
+      border-color: #388e3c;
+    }
+    .checkbox-wrapper[data-state="2"] {
+      background-color: #f44336;
+      border-color: #d32f2f;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+      width: 100%;
+      max-width: 200px;
+      transition: max-width 0.3s ease;
+      overflow: hidden;
+    }
+    .input-group:focus-within {
+      max-width: 100%;
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1.8px solid #ccc;
+      font-size: 14px;
+      transition: border-color 0.3s ease, width 0.3s ease;
+      min-width: 0;
+      width: 100%;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4a3aff;
+      box-shadow: 0 0 6px #4a3aff;
+      width: 100%;
+    }
+
+    .add-btn {
+      background-color: #4a3aff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, width 0.3s ease;
+      box-shadow: 0 3px 8px rgba(74,58,255,0.6);
+      flex-shrink: 0;
+      white-space: nowrap;
+      width: 50px;
+    }
+    .input-group:focus-within button.add-btn {
+      width: auto;
+    }
+    button.add-btn:hover {
+      background-color: #4a3affca;
+    }
+
+    button.img-btn {
+      background-color: #ff9800;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 3px 8px rgba(255,152,0,0.6);
+      flex-shrink: 0;
+      white-space: nowrap;
+      width: 50px;
+    }
+    button.img-btn:hover {
+      background-color: #e68a009b;
+    }
+
+    ul.task-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 12px 0;
+      flex-grow: 1;
+      overflow-y: auto;
+      max-height: 140px;
+      border-radius: 8px;
+      background: #fafaff;
+      box-shadow: inset 0 0 5px rgba(74,58,255,0.1);
+    }
+
+    ul.task-list.food-list {
+      background: #fff6e6;
+    }
+    ul.task-list.exercise-list {
+      background: #e6f0ff;
+    }
+
+    ul.task-list li {
+      background: #f5f5ff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+      color: #333;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+      min-height: 60px;
+      word-break: break-word;
+    }
+    ul.task-list li:hover {
+      background-color: #e0e0ff;
+    }
+    ul.task-list li.done {
+      text-decoration: line-through;
+      color: #999;
+      background-color: #d3d3d3;
+      cursor: default;
+    }
+
+    .task-text {
+      margin-bottom: 8px;
+    }
+
+    .task-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: box-shadow 0.3s ease;
+      max-height: 160px;
+    }
+    .task-image:hover {
+      box-shadow: 0 0 8px #4a3aff;
+    }
+
+    .delete-btn {
+      align-self: flex-end;
+      background: #ff5f5f;
+      border: none;
+      padding: 4px 9px;
+      border-radius: 6px;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 6px rgba(255,95,95,0.6);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .delete-btn:hover {
+      background: #ff2f2f;
+    }
+
+    #imgModal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #imgModalContent {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 12px;
+      background: white;
+      padding: 10px;
+      box-shadow: 0 0 15px rgba(74,58,255,0.8);
+    }
+
+    #imgModalContent img {
+      max-width: 100%;
+      max-height: 80vh;
+      display: block;
+      border-radius: 12px;
+    }
+
+    #imgModalClose {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: #ff5f5f;
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(255,95,95,0.6);
+      line-height: 28px;
+      text-align: center;
+      padding: 0;
+    }
+    #imgModalClose:hover {
+      background: #ff2f2f;
+    }
+
+    .controls {
+      width: 280px;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 150px;
+      user-select: none;
+    }
+
+    .controls button {
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      background-color: #4a3aff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(74,58,255,0.6);
+      transition: background-color 0.3s ease;
+      white-space: nowrap;
+    }
+    .controls button:hover {
+      background-color: #3a2edd;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>รักแฟน</h1>
+
+  <div class="container" id="todoContainer"></div>
+
+  <div class="controls">
+    <button id="prevBtn" title="กลับ">&laquo; Back</button>
+    <button id="overviewBtn" title="ดูภาพรวม">ดูภาพรวม</button>
+    <button id="nextBtn" title="หน้าถัดไป">Next &raquo;</button>
+  </div>
+
+  <!-- Modal โชว์รูปภาพ -->
+  <div id="imgModal">
+    <div id="imgModalContent">
+      <button id="imgModalClose" title="ปิด">×</button>
+      <img src="" alt="รูปขนาดใหญ่" />
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('todoContainer');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const overviewBtn = document.getElementById('overviewBtn');
+
+    const dayNames = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+    const columns = [];
+
+    // โหลดข้อมูลจาก localStorage
+    function loadData() {
+      const dataStr = localStorage.getItem('todoData');
+      if (!dataStr) return null;
+      try {
+        return JSON.parse(dataStr);
+      } catch {
+        return null;
+      }
+    }
+
+    // เซฟข้อมูลลง localStorage
+    function saveData(data) {
+      localStorage.setItem('todoData', JSON.stringify(data));
+    }
+
+    // แปลงไฟล์รูปภาพเป็น base64 string (async)
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject('Error reading file');
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // สร้าง HTML งานแต่ละชิ้น
+    function createTaskItem(task, taskList, colIndex) {
+      const li = document.createElement('li');
+
+      const spanText = document.createElement('span');
+      spanText.textContent = task.text;
+      spanText.className = 'task-text';
+      li.appendChild(spanText);
+
+      if (task.image) {
+        const img = document.createElement('img');
+        img.className = 'task-image';
+        img.alt = 'รูปภาพงาน';
+        img.src = task.image;
+
+        img.addEventListener('click', e => {
+          e.stopPropagation();
+          imgModalContent.src = img.src;
+          imgModal.style.display = 'flex';
+        });
+
+        li.appendChild(img);
+      }
+
+      if (task.state === '1') {
+        li.classList.add('done');
+      } else if (task.state === '2') {
+        li.style.backgroundColor = '#f8d7da';
+        li.style.color = '#721c24';
+      }
+
+      li.addEventListener('click', () => {
+        // เปลี่ยนสถานะ done (toggle)
+        if (li.classList.contains('done')) {
+          li.classList.remove('done');
+          task.state = '0';
+          li.style.backgroundColor = '';
+          li.style.color = '';
+        } else {
+          li.classList.add('done');
+          task.state = '1';
+          li.style.backgroundColor = '';
+          li.style.color = '';
+        }
+        saveTaskList(colIndex);
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'ลบ';
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        li.remove();
+        // ลบงานจากข้อมูลและเซฟ
+        const colData = todoData[colIndex];
+        colData.tasks = colData.tasks.filter(t => t !== task);
+        saveData(todoData);
+      });
+
+      li.appendChild(deleteBtn);
+      taskList.appendChild(li);
+    }
+
+    // เซฟงานทั้งหมดในคอลัมน์นั้น (ตาม DOM)
+    function saveTaskList(colIndex) {
+      const col = columns[colIndex];
+      const exerciseList = col.querySelector('ul.exercise-list');
+      const foodList = col.querySelector('ul.food-list');
+
+      const tasksExercise = [];
+      exerciseList.querySelectorAll('li').forEach(li => {
+        const text = li.querySelector('.task-text').textContent;
+        const img = li.querySelector('.task-image');
+        let imgSrc = img ? img.src : null;
+        let state = li.classList.contains('done') ? '1' : '0';
+        if (li.style.backgroundColor === 'rgb(248, 215, 218)' || li.style.backgroundColor === '#f8d7da') {
+          state = '2';
+        }
+        tasksExercise.push({ text, image: imgSrc, state, type: 'exercise' });
+      });
+
+      const tasksFood = [];
+      foodList.querySelectorAll('li').forEach(li => {
+        const text = li.querySelector('.task-text').textContent;
+        const img = li.querySelector('.task-image');
+        let imgSrc = img ? img.src : null;
+        let state = li.classList.contains('done') ? '1' : '0';
+        if (li.style.backgroundColor === 'rgb(248, 215, 218)' || li.style.backgroundColor === '#f8d7da') {
+          state = '2';
+        }
+        tasksFood.push({ text, image: imgSrc, state, type: 'food' });
+      });
+
+      // รวมงานแต่ละประเภทแยกเก็บใน tasks
+      todoData[colIndex].tasks = [...tasksExercise, ...tasksFood];
+      saveData(todoData);
+    }
+
+    // ตัวแปรเก็บข้อมูลหลักของงานแต่ละวัน (7 วัน)
+    let todoData = loadData();
+
+    if (!todoData) {
+      // สร้างข้อมูลเริ่มต้น ถ้ายังไม่มีข้อมูลเก่า
+      todoData = dayNames.map(day => ({
+        doneState: '0',
+        tasks: []
+      }));
+      saveData(todoData);
+    }
+
+    // สร้างคอลัมน์แต่ละวัน
+    for (let i = 0; i < 7; i++) {
+      const col = document.createElement('div');
+      col.className = 'todo-column';
+      col.dataset.index = i;
+
+      col.innerHTML = `
+        <h2>วัน ${dayNames[i]}</h2>
+        <label class="checkbox-wrapper" data-state="${todoData[i].doneState}">
+          <input type="checkbox" class="add-done-checkbox" />
+        </label>
+
+        <div class="input-group">
+          <input type="text" placeholder="ออกกำลังกาย..." />
+          <button class="img-btn" title="เพิ่มรูปภาพออกกำลังกาย">รูป</button>
+          <button class="add-btn">เพิ่ม</button>
+          <input type="file" accept="image/*" style="display:none" />
+        </div>
+
+        <ul class="task-list exercise-list"></ul>
+
+        <div class="input-group">
+          <input type="text" placeholder="อาหาร..." />
+          <button class="img-btn" title="เพิ่มรูปภาพอาหาร">รูป</button>
+          <button class="add-btn">เพิ่ม</button>
+          <input type="file" accept="image/*" style="display:none" />
+        </div>
+
+        <ul class="task-list food-list"></ul>
+      `;
+
+      container.appendChild(col);
+      columns.push(col);
+    }
+
+    // แสดงคอลัมน์แรกเริ่มต้น
+    let currentIndex = 0;
+    function showColumn(index) {
+      columns.forEach((col, i) => {
+        col.classList.toggle('active', i === index);
+      });
+    }
+    showColumn(currentIndex);
+
+    // จัดการปุ่ม next, prev
+    nextBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % 7;
+      showColumn(currentIndex);
+    });
+
+    prevBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 7 - 1) % 7;
+      showColumn(currentIndex);
+    });
+
+    // โหมดดูภาพรวม
+    let overviewMode = false;
+    overviewBtn.addEventListener('click', () => {
+      overviewMode = !overviewMode;
+      if (overviewMode) {
+        container.classList.add('overview');
+        container.style.height = 'auto';
+        columns.forEach(col => {
+          col.style.position = 'relative';
+          col.style.transform = 'none';
+          col.style.display = 'flex';
+          col.classList.remove('active');
+        });
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        overviewBtn.textContent = 'กลับสู่โหมดปกติ';
+      } else {
+        container.classList.remove('overview');
+        container.style.height = '650px';
+        showColumn(currentIndex);
+        prevBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'inline-block';
+        overviewBtn.textContent = 'ดูภาพรวม';
+      }
+    });
+
+    // Modal รูปภาพ
+    const imgModal = document.getElementById('imgModal');
+    const imgModalContent = imgModal.querySelector('img');
+    const imgModalClose = document.getElementById('imgModalClose');
+
+    imgModalClose.addEventListener('click', () => {
+      imgModal.style.display = 'none';
+    });
+    imgModal.addEventListener('click', e => {
+      if (e.target === imgModal) imgModal.style.display = 'none';
+    });
+
+    // ตัวแปรเก็บข้อมูลรูปภาพชั่วคราวตอนเพิ่มงาน
+    let tempImgData = null;
+
+    // ฟังก์ชันโหลดข้อมูลและแสดงงานใน UI
+    function loadTasksToUI() {
+      columns.forEach((col, index) => {
+        const exerciseList = col.querySelector('ul.exercise-list');
+        const foodList = col.querySelector('ul.food-list');
+        const doneCheckbox = col.querySelector('.checkbox-wrapper');
+
+        exerciseList.innerHTML = '';
+        foodList.innerHTML = '';
+
+        doneCheckbox.dataset.state = todoData[index].doneState;
+        const checkboxInput = doneCheckbox.querySelector('input[type=checkbox]');
+        checkboxInput.checked = todoData[index].doneState === '1';
+
+        todoData[index].tasks.forEach(task => {
+          if (task.type === 'exercise') {
+            createTaskItem(task, exerciseList, index);
+          } else {
+            createTaskItem(task, foodList, index);
+          }
+        });
+      });
+    }
+
+    loadTasksToUI();
+
+    // เพิ่มฟังก์ชันจัดการสถานะ doneState ของวัน
+    columns.forEach((col, index) => {
+      const doneCheckbox = col.querySelector('.checkbox-wrapper');
+      const checkboxInput = doneCheckbox.querySelector('input[type=checkbox]');
+      checkboxInput.checked = todoData[index].doneState === '1';
+
+      doneCheckbox.addEventListener('click', () => {
+        // สลับสถานะ doneState
+        if (doneCheckbox.dataset.state === '0') {
+          doneCheckbox.dataset.state = '1';
+          checkboxInput.checked = true;
+          todoData[index].doneState = '1';
+        } else {
+          doneCheckbox.dataset.state = '0';
+          checkboxInput.checked = false;
+          todoData[index].doneState = '0';
+        }
+        saveData(todoData);
+      });
+    });
+
+    // เพิ่มปุ่มเพิ่มงานและปุ่มเพิ่มรูปภาพในแต่ละคอลัมน์
+    columns.forEach((col, index) => {
+      // ออกกำลังกาย
+      const exerciseInput = col.querySelector('input[placeholder="ออกกำลังกาย..."]');
+      const exerciseAddBtn = col.querySelectorAll('button.add-btn')[0];
+      const exerciseImgBtn = col.querySelectorAll('button.img-btn')[0];
+      const exerciseFileInput = col.querySelectorAll('input[type="file"]')[0];
+      const exerciseList = col.querySelector('ul.exercise-list');
+
+      // อาหาร
+      const foodInput = col.querySelector('input[placeholder="อาหาร..."]');
+      const foodAddBtn = col.querySelectorAll('button.add-btn')[1];
+      const foodImgBtn = col.querySelectorAll('button.img-btn')[1];
+      const foodFileInput = col.querySelectorAll('input[type="file"]')[1];
+      const foodList = col.querySelector('ul.food-list');
+
+      // รูปภาพสำหรับงานออกกำลังกาย
+      exerciseImgBtn.addEventListener('click', () => {
+        exerciseFileInput.click();
+      });
+
+      exerciseFileInput.addEventListener('change', async e => {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          try {
+            tempImgData = await fileToBase64(file);
+          } catch {
+            alert('โหลดรูปภาพล้มเหลว');
+            tempImgData = null;
+          }
+        }
+      });
+
+      exerciseAddBtn.addEventListener('click', () => {
+        const val = exerciseInput.value.trim();
+        if (!val) {
+          alert('กรุณาใส่ข้อความออกกำลังกาย');
+          return;
+        }
+        const newTask = {
+          text: val,
+          image: tempImgData,
+          state: '0',
+          type: 'exercise'
+        };
+        todoData[index].tasks.push(newTask);
+        saveData(todoData);
+        createTaskItem(newTask, exerciseList, index);
+
+        exerciseInput.value = '';
+        tempImgData = null;
+        exerciseFileInput.value = '';
+      });
+
+      // รูปภาพสำหรับงานอาหาร
+      foodImgBtn.addEventListener('click', () => {
+        foodFileInput.click();
+      });
+
+      foodFileInput.addEventListener('change', async e => {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          try {
+            tempImgData = await fileToBase64(file);
+          } catch {
+            alert('โหลดรูปภาพล้มเหลว');
+            tempImgData = null;
+          }
+        }
+      });
+
+      foodAddBtn.addEventListener('click', () => {
+        const val = foodInput.value.trim();
+        if (!val) {
+          alert('กรุณาใส่ข้อความอาหาร');
+          return;
+        }
+        const newTask = {
+          text: val,
+          image: tempImgData,
+          state: '0',
+          type: 'food'
+        };
+        todoData[index].tasks.push(newTask);
+        saveData(todoData);
+        createTaskItem(newTask, foodList, index);
+
+        foodInput.value = '';
+        tempImgData = null;
+        foodFileInput.value = '';
+      });
+    });
+  </script>
+</body>
+</html>
