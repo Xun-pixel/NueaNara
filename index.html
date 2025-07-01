@@ -3,14 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <title>หน้า Home</title>
+  <style>
+    /* ตั้งค่าพื้นหลังแบบไล่เฉดสี */
+    body {
+      font-family: 'Kanit', sans-serif, Arial, sans-serif;
+      background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 40px;
+      color: #6a1b4d;
+      text-shadow: 1px 1px 2px #fff;
+    }
+
+    button {
+      background: #f06292;
+      border: none;
+      border-radius: 25px;
+      color: white;
+      font-size: 1.2rem;
+      padding: 15px 40px;
+      margin: 10px 0;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgba(240, 98, 146, 0.4);
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background: #e91e63;
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(233, 30, 99, 0.6);
+    }
+
+    /* ข้อความรักแฟน */
+    .love-text {
+      margin-top: 60px;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #d81b60;
+      text-shadow: 1px 1px 3px #fff;
+      user-select: none;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
 </head>
 <body>
   <h1>หน้า Home</h1>
   
-  <button onclick="location.href='weak1.html'">ไปหน้า Weak1</button><br/><br/>
-  <button onclick="location.href='weak2.html'">ไปหน้า Weak2</button><br/><br/>
-  <button onclick="location.href='weak3.html'">ไปหน้า Weak3</button><br/><br/>
+  <button onclick="location.href='weak1.html'">ไปหน้า Weak1</button><br/>
+  <button onclick="location.href='weak2.html'">ไปหน้า Weak2</button><br/>
+  <button onclick="location.href='weak3.html'">ไปหน้า Weak3</button><br/>
   <button onclick="location.href='weak4.html'">ไปหน้า Weak4</button>
-  
+
+  <div class="love-text">รักแฟน ❤️</div>
 </body>
 </html>
