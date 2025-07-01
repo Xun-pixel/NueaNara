@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>To-Do List 52 สัปดาห์ 7 วัน</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kanit&display=swap');
+  body {
+    font-family: 'Kanit', sans-serif;
+    background: #f0f4ff;
+    margin: 0; padding: 20px;
+    box-sizing: border-box;
+  }
+  .week-buttons, .day-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 6px;
+    max-width: 100%;
+    margin-bottom: 20px;
+  }
+  button {
+    background: #4a3aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 0;
+    user-select: none;
+    transition: background-color 0.3s ease;
+  }
+  button.active, button:hover {
+    background: #3a2edd;
+  }
+  .container {
+    max-width: 320px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 16px;
+  }
+  h2 {
+    text-align: center;
+    color: #4a3aff;
+    margin-top: 0;
+  }
+  label {
+    font-weight: 700;
+    display: block;
+    margin: 8px 0 4px 0;
+  }
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  input[type="text"] {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.8px solid #ccc;
+    font-size: 14px;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #4a3aff;
+    box-shadow: 0 0 6px #4a3aff;
+  }
+  button.add-btn, button.img-btn {
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 14px;
+    box-shadow: 0 3px 8px rgba(74,58,255,0.6);
+    white-space: nowrap;
+  }
+  button.add-btn {
+    background-color: #4a3aff;
+  }
+  button.add-btn:hover {
+    background-color: #3a2edd;
+  }
+  button.img-btn {
+    background-color: #ff9800;
+  }
+  button.img-btn:hover {
+    background-color: #e68a009b;
+  }
+  ul.task-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 12px 0;
+    max-height: 140px;
+    overflow-y: auto;
+    border-radius: 8px;
+    background: #fafaff;
+    box-shadow: inset 0 0 5px rgba(74,58,255,0.1);
+  }
+  ul.task-list li {
+    background: #f5f5ff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: #333;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  ul.task-list li.done {
+    text-decoration: line-through;
+    color: #999;
+    background-color: #d3d3d3;
+    cursor: default;
+  }
+  .task-text {
+    flex-grow: 1;
+  }
+  .delete-btn {
+    background: #ff5f5f;
+    border: none;
+    padding: 4px 9px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 12px;
+  }
+  .delete-btn:hover {
+    background: #ff2f2f;
+  }
+</style>
+</head>
+<body>
+
+<!-- ปุ่มเลือกสัปดาห์ -->
+<div class="week-buttons" id="weekButtons"></div>
+
+<!-- ปุ่มเลือกวัน -->
+<div class="day-buttons" id="dayButtons"></div>
+
+<!-- รายละเอียด To-Do List -->
+<div class="container">
+  <h2 id="titleWeekDay">สัปดาห์ 1 - วัน จันทร์</h2>
+
+  <div>
+    <label>ออกกำลังกาย</label>
+    <div class="input-group">
+      <input type="text" id="exerciseInput" placeholder="ใส่ข้อความออกกำลังกาย..." />
+      <button class="img-btn" id="exerciseImgBtn" title="เพิ่มรูปภาพ">รูป</button>
+      <button class="add-btn" id="exerciseAddBtn">เพิ่ม</button>
+      <input type="file" id="exerciseFileInput" accept="image/*" style="display:none" />
+    </div>
+    <ul class="task-list" id="exerciseList"></ul>
+  </div>
+
+  <div>
+    <label>อาหาร</label>
+    <div class="input-group">
+      <input type="text" id="foodInput" placeholder="ใส่ข้อความอาหาร..." />
+      <button class="img-btn" id="foodImgBtn" title="เพิ่มรูปภาพ">รูป</button>
+      <button class="add-btn" id="foodAddBtn">เพิ่ม</button>
+      <input type="file" id="foodFileInput" accept="image/*" style="display:none" />
+    </div>
+    <ul class="task-list" id="foodList"></ul>
+  </div>
+</div>
+
+<script>
+  const weekButtonsDiv = document.getElementById('weekButtons');
+  const dayButtonsDiv = document.getElementById('dayButtons');
+  const titleWeekDay = document.getElementById('titleWeekDay');
+
+  const exerciseInput = document.getElementById('exerciseInput');
+  const exerciseAddBtn = document.getElementById('exerciseAddBtn');
+  const exerciseImgBtn = document.getElementById('exerciseImgBtn');
+  const exerciseFileInput = document.getElementById('exerciseFileInput');
+  const exerciseList = document.getElementById('exerciseList');
+
+  const foodInput = document.getElementById('foodInput');
+  const foodAddBtn = document.getElementById('foodAddBtn');
+  const foodImgBtn = document.getElementById('foodImgBtn');
+  const foodFileInput = document.getElementById('foodFileInput');
+  const foodList = document.getElementById('foodList');
+
+  const dayNames = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+
+  let currentWeek = 1;
+  let currentDayIndex = 0; // 0 = จันทร์
+
+  let tempExerciseImg = null;
+  let tempFoodImg = null;
+
+  // สร้างปุ่มสัปดาห์ 1-52
+  function createWeekButtons() {
+    for(let i = 1; i <= 52; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.addEventListener('click', () => {
+        if(currentWeek !== i){
+          currentWeek = i;
+          loadDayButtons();
+          loadDataForCurrent();
+          updateButtonsActive();
+        }
+      });
+      weekButtonsDiv.appendChild(btn);
+    }
+  }
+
+  // สร้างปุ่มวัน 7 วัน
+  function loadDayButtons() {
+    dayButtonsDiv.innerHTML = '';
+    for(let i=0; i<7; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = dayNames[i];
+      btn.addEventListener('click', () => {
+        if(currentDayIndex !== i){
+          currentDayIndex = i;
+          loadDataForCurrent();
+          updateButtonsActive();
+        }
+      });
+      dayButtonsDiv.appendChild(btn);
+    }
+  }
+
+  // อัพเดตไฮไลท์ปุ่มที่เลือก
+  function updateButtonsActive() {
+    Array.from(weekButtonsDiv.children).forEach((btn, idx) => {
+      btn.classList.toggle('active', idx+1 === currentWeek);
+    });
+    Array.from(dayButtonsDiv.children).forEach((btn, idx) => {
+      btn.classList.toggle('active', idx === currentDayIndex);
+    });
+    titleWeekDay.textContent = `สัปดาห์ ${currentWeek} - วัน ${dayNames[currentDayIndex]}`;
+  }
+
+  // โหลดข้อมูลจาก localStorage ตามสัปดาห์และวัน
+  function loadDataForCurrent() {
+    clearInputsAndLists();
+
+    const key = `todoData_week${currentWeek}_day${currentDayIndex}`;
+    const dataStr = localStorage.getItem(key);
+    if(!dataStr){
+      saveDataForCurrent({exercise:[], food:[]}); // สร้างข้อมูลเปล่าไว้ก่อน
+      return;
+    }
+    try{
+      const data = JSON.parse(dataStr);
+      data.exercise.forEach(task=>{
+        addTaskToList(task.text, task.image, exerciseList, false, task.done);
+      });
+      data.food.forEach(task=>{
+        addTaskToList(task.text, task.image, foodList, false, task.done);
+      });
+    } catch(e){
+      alert('โหลดข้อมูลล้มเหลว');
+    }
+  }
+
+  // บันทึกข้อมูลปัจจุบัน
+  function saveDataForCurrent(data) {
+    const key = `todoData_week${currentWeek}_day${currentDayIndex}`;
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  // เพิ่ม task ลง list พร้อม event
+  function addTaskToList(text, imgData, listElem, saveAfterAdd=true, done=false){
+    const li = document.createElement('li');
+
+    const span = document.createElement('span');
+    span.className = 'task-text';
+    span.textContent = text;
+    li.appendChild(span);
+
+    if(imgData){
+      const img = document.createElement('img');
+      img.src = imgData;
+      img.style.maxWidth = '40px';
+      img.style.maxHeight = '40px';
+      img.style.marginLeft = '8px';
+      img.style.borderRadius = '6px';
+      li.appendChild(img);
+    }
+
+    if(done){
+      li.classList.add('done');
+    }
+
+    // toggle done on click (เว้นปุ่มลบ)
+    li.addEventListener('click', e => {
+      if(e.target.tagName==='BUTTON') return;
+      li.classList.toggle('done');
+      saveCurrentTasks();
+    });
+
+    // ปุ่มลบ
+    const delBtn = document.createElement('button');
+    delBtn.className = 'delete-btn';
+    delBtn.textContent = 'ลบ';
+    delBtn.addEventListener('click', e=>{
+      e.stopPropagation();
+      li.remove();
+      saveCurrentTasks();
+    });
+    li.appendChild(delBtn);
+
+    listElem.appendChild(li);
+
+    if(saveAfterAdd) saveCurrentTasks();
+  }
+
+  // ล้างอินพุตและลิสต์
+  function clearInputsAndLists(){
+    exerciseInput.value = '';
+    foodInput.value = '';
+    exerciseList.innerHTML = '';
+    foodList.innerHTML = '';
+    tempExerciseImg = null;
+    tempFoodImg = null;
+    exerciseFileInput.value = '';
+    foodFileInput.value = '';
+  }
+
+  // บันทึกงานปัจจุบัน
+  function saveCurrentTasks(){
+    const exerciseTasks = [];
+    exerciseList.querySelectorAll('li').forEach(li=>{
+      exerciseTasks.push({
+        text: li.querySelector('.task-text').textContent,
+        image: li.querySelector('img') ? li.querySelector('img').src : null,
+        done: li.classList.contains('done')
+      });
+    });
+    const foodTasks = [];
+    foodList.querySelectorAll('li').forEach(li=>{
+      foodTasks.push({
+        text: li.querySelector('.task-text').textContent,
+        image: li.querySelector('img') ? li.querySelector('img').src : null,
+        done: li.classList.contains('done')
+      });
+    });
+    saveDataForCurrent({exercise: exerciseTasks, food: foodTasks});
+  }
+
+  // แปลงไฟล์รูปเป็น base64
+  function fileToBase64(file){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=>resolve(reader.result);
+      reader.onerror = ()=>reject('Error');
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // จัดการเพิ่มรูปภาพออกกำลังกาย
+  exerciseImgBtn.addEventListener('click', () => exerciseFileInput.click());
+  exerciseFileInput.addEventListener('change', async e => {
+    if(e.target.files.length > 0){
+      try{
+        tempExerciseImg = await fileToBase64(e.target.files[0]);
+      } catch{
+        alert('โหลดรูปภาพล้มเหลว');
+        tempExerciseImg = null;
+      }
+    }
+  });
+
+  // จัดการเพิ่มรูปภาพอาหาร
+  foodImgBtn.addEventListener('click', () => foodFileInput.click());
+  foodFileInput.addEventListener('change', async e => {
+    if(e.target.files.length > 0){
+      try{
+        tempFoodImg = await fileToBase64(e.target.files[0]);
+      } catch{
+        alert('โหลดรูปภาพล้มเหลว');
+        tempFoodImg = null;
+      }
+    }
+  });
+
+  // เพิ่มออกกำลังกาย
+  exerciseAddBtn.addEventListener('click', () => {
+    const val = exerciseInput.value.trim();
+    if(!val){
+      alert('กรุณาใส่ข้อความออกกำลังกาย');
+      return;
+    }
+    addTaskToList(val, tempExerciseImg, exerciseList);
+    exerciseInput.value = '';
+    tempExerciseImg = null;
+    exerciseFileInput.value = '';
+  });
+
+  // เพิ่มอาหาร
+  foodAddBtn.addEventListener('click', () => {
+    const val = foodInput.value.trim();
+    if(!val){
+      alert('กรุณาใส่ข้อความอาหาร');
+      return;
+    }
+    addTaskToList(val, tempFoodImg, foodList);
+    foodInput.value = '';
+    tempFoodImg = null;
+    foodFileInput.value = '';
+  });
+
+  // เริ่มทำงาน
+  createWeekButtons();
+  loadDayButtons();
+  updateButtonsActive();
+  loadDataForCurrent();
+
+</script>
+</body>
+</html>
