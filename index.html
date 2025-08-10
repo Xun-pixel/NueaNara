@@ -1,68 +1,367 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <title>หน้า Home</title>
-  <style>
-    /* ตั้งค่าพื้นหลังแบบไล่เฉดสี */
-    body {
-      font-family: 'Kanit', sans-serif, Arial, sans-serif;
-      background: linear-gradient(135deg, #ffdde1, #ee9ca7);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      color: #333;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมสุ่มชื่อสัตว์และพลัง</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            user-select: none;
+        }
 
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 40px;
-      color: #6a1b4d;
-      text-shadow: 1px 1px 2px #fff;
-    }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-    button {
-      background: #f06292;
-      border: none;
-      border-radius: 25px;
-      color: white;
-      font-size: 1.2rem;
-      padding: 15px 40px;
-      margin: 10px 0;
-      cursor: pointer;
-      box-shadow: 0 6px 12px rgba(240, 98, 146, 0.4);
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
+        h1 {
+            color: #333;
+        }
 
-    button:hover {
-      background: #e91e63;
-      transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(233, 30, 99, 0.6);
-    }
+        .middle-section {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    /* ข้อความรักแฟน */
-    .love-text {
-      margin-top: 60px;
-      font-size: 2rem;
-      font-weight: bold;
-      color: #d81b60;
-      text-shadow: 1px 1px 3px #fff;
-      user-select: none;
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
+        #random-box {
+            width: 200px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            color: #fff;
+            position: relative;
+            cursor: grab;
+        }
+
+        #random-box.dragging {
+            opacity: 0.5;
+        }
+
+        #random-box .name {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        #random-box .power {
+            font-size: 0.9em;
+            background-color: #fff;
+            color: #4CAF50;
+            padding: 2px 6px;
+            border-radius: 10px;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+
+        #draw-button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+
+        #draw-button:hover:not(:disabled) {
+            background-color: #0b7dda;
+        }
+        
+        #draw-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            max-width: 700px;
+        }
+
+        .card {
+            width: 100px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-color: #ffeb3b;
+            border-radius: 8px;
+            border: 2px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            position: relative;
+        }
+        
+        .card.dragover {
+            border-color: #2196F3;
+            background-color: #e0f2f1;
+        }
+        
+        .card .power {
+            background-color: #2196F3;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.8em;
+            line-height: 1;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ส่วนของหน้าต่างยืนยัน */
+        .confirmation-modal {
+            display: none; /* ซ่อนไว้ในตอนเริ่มต้น */
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content p {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .modal-content .buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .modal-content button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        #use-card-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #cancel-btn {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-  <h1>หน้า Home</h1>
-  
-  <button onclick="location.href='weak1.html'">ไปหน้า Weak1</button><br/>
-  <button onclick="location.href='weak2.html'">ไปหน้า Weak2</button><br/>
-  <button onclick="location.href='weak3.html'">ไปหน้า Weak3</button><br/>
-  <button onclick="location.href='weak4.html'">ไปหน้า Weak4</button>
 
-  <div class="love-text">รักแฟน ❤️</div>
+    <div class="container">
+        <h1>โปรแกรมสุ่มชื่อสัตว์และพลัง</h1>
+
+        <div class="middle-section">
+            <div id="random-box" draggable="true">
+                <span class="name">?</span>
+                <span class="power"></span>
+            </div>
+            <button id="draw-button">สุ่มชื่อสัตว์</button>
+        </div>
+
+        <div class="card-container">
+            <div id="card-1" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+            <div id="card-2" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+            <div id="card-3" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+            <div id="card-4" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+            <div id="card-5" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmation-modal" class="confirmation-modal">
+        <div class="modal-content">
+            <p>คุณต้องการใช้การ์ดนี้ใช่หรือไม่?</p>
+            <div class="buttons">
+                <button id="use-card-btn">ใช้การ์ด</button>
+                <button id="cancel-btn">ยกเลิก</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const drawButton = document.getElementById('draw-button');
+            const randomBox = document.getElementById('random-box');
+            const randomNameSpan = randomBox.querySelector('.name');
+            const randomPowerSpan = randomBox.querySelector('.power');
+            const cards = document.querySelectorAll('.card');
+
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const useCardBtn = document.getElementById('use-card-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            let clickedCardElement = null; // เก็บอ้างอิงถึงการ์ดที่ถูกคลิก
+
+            const animals = [
+                { name: "หนู", power: 1 },
+                { name: "ตุ่น", power: 2 },
+                { name: "ม้าลาย", power: 3 },
+                { name: "ยีราฟ", power: 4 },
+                { name: "นกกระจอกเทศ", power: 5 },
+                { name: "เสือชีต้า", power: 6 },
+                { name: "แรด", power: 7 },
+                { name: "ช้าง", power: 8 }
+            ];
+
+            // ฟังก์ชันตรวจสอบว่าช่องไพ่เต็มหรือไม่
+            function areCardsFull() {
+                let filledCount = 0;
+                cards.forEach(card => {
+                    if (card.querySelector('.card-name').textContent !== '') {
+                        filledCount++;
+                    }
+                });
+                return filledCount === 5;
+            }
+
+            // ฟังก์ชันอัปเดตสถานะของปุ่มสุ่ม
+            function updateDrawButtonState() {
+                if (areCardsFull()) {
+                    drawButton.disabled = true;
+                } else {
+                    drawButton.disabled = false;
+                }
+            }
+
+            // เรียกใช้ครั้งแรกเมื่อโหลดหน้า
+            updateDrawButtonState();
+
+            // --- ฟังก์ชันการสุ่มชื่อสัตว์ ---
+            drawButton.addEventListener('click', () => {
+                if (areCardsFull()) {
+                    return; // ไม่ทำงานถ้่าช่องเต็ม
+                }
+                const randomIndex = Math.floor(Math.random() * animals.length);
+                const selectedAnimal = animals[randomIndex];
+                randomNameSpan.textContent = selectedAnimal.name;
+                randomPowerSpan.textContent = selectedAnimal.power;
+            });
+
+            // --- ฟังก์ชันการลากและวาง (Drag and Drop) ---
+            randomBox.addEventListener('dragstart', (e) => {
+                const data = {
+                    name: randomNameSpan.textContent,
+                    power: randomPowerSpan.textContent
+                };
+                if (data.name !== '?' && data.name !== '') {
+                    e.dataTransfer.setData('application/json', JSON.stringify(data));
+                    e.target.classList.add('dragging');
+                }
+            });
+
+            randomBox.addEventListener('dragend', (e) => {
+                e.target.classList.remove('dragging');
+            });
+
+            cards.forEach(card => {
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    card.classList.add('dragover');
+                });
+
+                card.addEventListener('dragleave', (e) => {
+                    card.classList.remove('dragover');
+                });
+                
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('dragover');
+                    
+                    const dataString = e.dataTransfer.getData('application/json');
+                    if (dataString) {
+                        const data = JSON.parse(dataString);
+                        card.querySelector('.card-name').textContent = data.name;
+                        card.querySelector('.power').textContent = data.power;
+                        
+                        randomNameSpan.textContent = '?';
+                        randomPowerSpan.textContent = '';
+                        
+                        updateDrawButtonState(); // อัปเดตสถานะปุ่มหลังจากวางไพ่
+                    }
+                });
+            });
+
+            // --- ฟังก์ชันการลบไพ่เมื่อคลิกที่ช่อง ---
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    if (card.querySelector('.card-name').textContent !== '') {
+                        clickedCardElement = card;
+                        confirmationModal.style.display = 'block';
+                    }
+                });
+            });
+
+            // --- การทำงานของหน้าต่างยืนยัน ---
+            useCardBtn.addEventListener('click', () => {
+                if (clickedCardElement) {
+                    clickedCardElement.querySelector('.card-name').textContent = '';
+                    clickedCardElement.querySelector('.power').textContent = '';
+                }
+                confirmationModal.style.display = 'none';
+                updateDrawButtonState(); // อัปเดตสถานะปุ่มหลังจากลบไพ่
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                confirmationModal.style.display = 'none';
+                clickedCardElement = null; // ล้างค่าการอ้างอิง
+            });
+        });
+    </script>
 </body>
 </html>
