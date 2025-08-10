@@ -96,6 +96,7 @@
             gap: 15px;
             margin-top: 20px;
             max-width: 700px;
+            flex-wrap: wrap; /* เพิ่มเพื่อให้การ์ดแสดงผลในแถวใหม่เมื่อมีขนาดไม่พอ */
         }
 
         .card {
@@ -136,7 +137,7 @@
 
         /* ส่วนของหน้าต่างยืนยัน */
         .confirmation-modal {
-            display: none; /* ซ่อนไว้ในตอนเริ่มต้น */
+            display: none;
             position: fixed;
             z-index: 1;
             left: 0;
@@ -194,7 +195,7 @@
         <h1>โปรแกรมสุ่มชื่อสัตว์และพลัง</h1>
 
         <div class="middle-section">
-            <div id="random-box" draggable="true">
+            <div id="random-box">
                 <span class="name">?</span>
                 <span class="power"></span>
             </div>
@@ -222,6 +223,18 @@
                 <span class="card-name"></span>
                 <span class="power"></span>
             </div>
+            <div id="card-6" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+            <div id="card-7" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
+            <div id="card-8" class="card">
+                <span class="card-name"></span>
+                <span class="power"></span>
+            </div>
         </div>
     </div>
 
@@ -238,9 +251,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const drawButton = document.getElementById('draw-button');
-            const randomBox = document.getElementById('random-box');
-            const randomNameSpan = randomBox.querySelector('.name');
-            const randomPowerSpan = randomBox.querySelector('.power');
             const cards = document.querySelectorAll('.card');
 
             const confirmationModal = document.getElementById('confirmation-modal');
@@ -261,83 +271,36 @@
 
             let availableAnimals = [...animals];
 
-            function areCardsFull() {
-                let filledCount = 0;
-                cards.forEach(card => {
-                    if (card.querySelector('.card-name').textContent !== '') {
-                        filledCount++;
-                    }
-                });
-                return filledCount === 5;
-            }
-
             function updateDrawButtonState() {
-                if (areCardsFull() || availableAnimals.length === 0) {
-                    drawButton.disabled = true;
-                } else {
-                    drawButton.disabled = false;
-                }
+                // ปุ่มจะถูกปิดเมื่อไม่มีสัตว์เหลือให้สุ่ม
+                drawButton.disabled = availableAnimals.length === 0;
             }
 
             drawButton.addEventListener('click', () => {
+                // ตรวจสอบว่ายังมีสัตว์ให้สุ่มหรือไม่
                 if (availableAnimals.length === 0) {
                     return;
                 }
                 
-                const randomIndex = Math.floor(Math.random() * availableAnimals.length);
-                const selectedAnimal = availableAnimals[randomIndex];
+                // ค้นหาการ์ดที่ว่างช่องแรก
+                const emptyCard = Array.from(cards).find(card => card.querySelector('.card-name').textContent === '');
 
-                randomNameSpan.textContent = selectedAnimal.name;
-                randomPowerSpan.textContent = selectedAnimal.power;
+                if (emptyCard) {
+                    const randomIndex = Math.floor(Math.random() * availableAnimals.length);
+                    const selectedAnimal = availableAnimals[randomIndex];
 
-                availableAnimals.splice(randomIndex, 1);
+                    // ใส่ข้อมูลสัตว์ลงในการ์ดที่ว่าง
+                    emptyCard.querySelector('.card-name').textContent = selectedAnimal.name;
+                    emptyCard.querySelector('.power').textContent = selectedAnimal.power;
+
+                    // ลบสัตว์ที่สุ่มได้ออกจากอาร์เรย์ที่ใช้สุ่ม
+                    availableAnimals.splice(randomIndex, 1);
+                }
                 
                 updateDrawButtonState();
             });
 
-            randomBox.addEventListener('dragstart', (e) => {
-                const data = {
-                    name: randomNameSpan.textContent,
-                    power: randomPowerSpan.textContent
-                };
-                if (data.name !== '?' && data.name !== '') {
-                    e.dataTransfer.setData('application/json', JSON.stringify(data));
-                    e.target.classList.add('dragging');
-                }
-            });
-
-            randomBox.addEventListener('dragend', (e) => {
-                e.target.classList.remove('dragging');
-            });
-
-            cards.forEach(card => {
-                card.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    card.classList.add('dragover');
-                });
-
-                card.addEventListener('dragleave', (e) => {
-                    card.classList.remove('dragover');
-                });
-                
-                card.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    card.classList.remove('dragover');
-                    
-                    const dataString = e.dataTransfer.getData('application/json');
-                    if (dataString) {
-                        const data = JSON.parse(dataString);
-                        card.querySelector('.card-name').textContent = data.name;
-                        card.querySelector('.power').textContent = data.power;
-                        
-                        randomNameSpan.textContent = '?';
-                        randomPowerSpan.textContent = '';
-                        
-                        updateDrawButtonState();
-                    }
-                });
-            });
-
+            // --- ส่วนการลบไพ่เมื่อคลิกที่ช่อง ---
             cards.forEach(card => {
                 card.addEventListener('click', () => {
                     if (card.querySelector('.card-name').textContent !== '') {
@@ -349,6 +312,14 @@
 
             useCardBtn.addEventListener('click', () => {
                 if (clickedCardElement) {
+                    const usedAnimalName = clickedCardElement.querySelector('.card-name').textContent;
+                    const usedAnimalPower = clickedCardElement.querySelector('.power').textContent;
+
+                    // คืนสัตว์ที่ถูกลบไปกลับเข้าอาร์เรย์ `availableAnimals`
+                    const animalToReturn = { name: usedAnimalName, power: parseInt(usedAnimalPower) };
+                    availableAnimals.push(animalToReturn);
+                    
+                    // ล้างข้อมูลในการ์ด
                     clickedCardElement.querySelector('.card-name').textContent = '';
                     clickedCardElement.querySelector('.power').textContent = '';
                 }
