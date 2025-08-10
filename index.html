@@ -246,7 +246,7 @@
             const confirmationModal = document.getElementById('confirmation-modal');
             const useCardBtn = document.getElementById('use-card-btn');
             const cancelBtn = document.getElementById('cancel-btn');
-            let clickedCardElement = null; // เก็บอ้างอิงถึงการ์ดที่ถูกคลิก
+            let clickedCardElement = null;
 
             const animals = [
                 { name: "หนู", power: 1 },
@@ -259,7 +259,8 @@
                 { name: "ช้าง", power: 8 }
             ];
 
-            // ฟังก์ชันตรวจสอบว่าช่องไพ่เต็มหรือไม่
+            let availableAnimals = [...animals];
+
             function areCardsFull() {
                 let filledCount = 0;
                 cards.forEach(card => {
@@ -270,30 +271,30 @@
                 return filledCount === 5;
             }
 
-            // ฟังก์ชันอัปเดตสถานะของปุ่มสุ่ม
             function updateDrawButtonState() {
-                if (areCardsFull()) {
+                if (areCardsFull() || availableAnimals.length === 0) {
                     drawButton.disabled = true;
                 } else {
                     drawButton.disabled = false;
                 }
             }
 
-            // เรียกใช้ครั้งแรกเมื่อโหลดหน้า
-            updateDrawButtonState();
-
-            // --- ฟังก์ชันการสุ่มชื่อสัตว์ ---
             drawButton.addEventListener('click', () => {
-                if (areCardsFull()) {
-                    return; // ไม่ทำงานถ้่าช่องเต็ม
+                if (availableAnimals.length === 0) {
+                    return;
                 }
-                const randomIndex = Math.floor(Math.random() * animals.length);
-                const selectedAnimal = animals[randomIndex];
+                
+                const randomIndex = Math.floor(Math.random() * availableAnimals.length);
+                const selectedAnimal = availableAnimals[randomIndex];
+
                 randomNameSpan.textContent = selectedAnimal.name;
                 randomPowerSpan.textContent = selectedAnimal.power;
+
+                availableAnimals.splice(randomIndex, 1);
+                
+                updateDrawButtonState();
             });
 
-            // --- ฟังก์ชันการลากและวาง (Drag and Drop) ---
             randomBox.addEventListener('dragstart', (e) => {
                 const data = {
                     name: randomNameSpan.textContent,
@@ -332,12 +333,11 @@
                         randomNameSpan.textContent = '?';
                         randomPowerSpan.textContent = '';
                         
-                        updateDrawButtonState(); // อัปเดตสถานะปุ่มหลังจากวางไพ่
+                        updateDrawButtonState();
                     }
                 });
             });
 
-            // --- ฟังก์ชันการลบไพ่เมื่อคลิกที่ช่อง ---
             cards.forEach(card => {
                 card.addEventListener('click', () => {
                     if (card.querySelector('.card-name').textContent !== '') {
@@ -347,20 +347,22 @@
                 });
             });
 
-            // --- การทำงานของหน้าต่างยืนยัน ---
             useCardBtn.addEventListener('click', () => {
                 if (clickedCardElement) {
                     clickedCardElement.querySelector('.card-name').textContent = '';
                     clickedCardElement.querySelector('.power').textContent = '';
                 }
                 confirmationModal.style.display = 'none';
-                updateDrawButtonState(); // อัปเดตสถานะปุ่มหลังจากลบไพ่
+                clickedCardElement = null;
+                updateDrawButtonState();
             });
 
             cancelBtn.addEventListener('click', () => {
                 confirmationModal.style.display = 'none';
-                clickedCardElement = null; // ล้างค่าการอ้างอิง
+                clickedCardElement = null;
             });
+
+            updateDrawButtonState();
         });
     </script>
 </body>
