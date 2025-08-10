@@ -47,11 +47,6 @@
             margin-bottom: 15px;
             color: #fff;
             position: relative;
-            cursor: grab;
-        }
-
-        #random-box.dragging {
-            opacity: 0.5;
         }
 
         #random-box .name {
@@ -96,7 +91,6 @@
             gap: 15px;
             margin-top: 20px;
             max-width: 700px;
-            flex-wrap: wrap; /* เพิ่มเพื่อให้การ์ดแสดงผลในแถวใหม่เมื่อมีขนาดไม่พอ */
         }
 
         .card {
@@ -117,11 +111,6 @@
             position: relative;
         }
         
-        .card.dragover {
-            border-color: #2196F3;
-            background-color: #e0f2f1;
-        }
-        
         .card .power {
             background-color: #2196F3;
             color: white;
@@ -135,7 +124,6 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
-        /* ส่วนของหน้าต่างยืนยัน */
         .confirmation-modal {
             display: none;
             position: fixed;
@@ -223,18 +211,6 @@
                 <span class="card-name"></span>
                 <span class="power"></span>
             </div>
-            <div id="card-6" class="card">
-                <span class="card-name"></span>
-                <span class="power"></span>
-            </div>
-            <div id="card-7" class="card">
-                <span class="card-name"></span>
-                <span class="power"></span>
-            </div>
-            <div id="card-8" class="card">
-                <span class="card-name"></span>
-                <span class="power"></span>
-            </div>
         </div>
     </div>
 
@@ -269,38 +245,57 @@
                 { name: "ช้าง", power: 8 }
             ];
 
-            let availableAnimals = [...animals];
+            // สร้างลิสต์การ์ดทั้งหมด 64 ใบ
+            let availableCards = [];
+            animals.forEach(animal => {
+                for (let i = 0; i < 8; i++) {
+                    availableCards.push({ ...animal }); // ใช้ spread operator เพื่อสร้าง object ใหม่
+                }
+            });
 
             function updateDrawButtonState() {
-                // ปุ่มจะถูกปิดเมื่อไม่มีสัตว์เหลือให้สุ่ม
-                drawButton.disabled = availableAnimals.length === 0;
+                let filledCardCount = 0;
+                cards.forEach(card => {
+                    if (card.querySelector('.card-name').textContent !== '') {
+                        filledCardCount++;
+                    }
+                });
+
+                // ปุ่มจะถูกปิดเมื่อ:
+                // 1. มีการ์ดเต็ม 5 ช่อง OR
+                // 2. ไม่มีใบการ์ดเหลือให้สุ่มแล้ว
+                if (filledCardCount === 5 || availableCards.length === 0) {
+                    drawButton.disabled = true;
+                } else {
+                    drawButton.disabled = false;
+                }
             }
 
             drawButton.addEventListener('click', () => {
-                // ตรวจสอบว่ายังมีสัตว์ให้สุ่มหรือไม่
-                if (availableAnimals.length === 0) {
-                    return;
-                }
-                
-                // ค้นหาการ์ดที่ว่างช่องแรก
+                // ตรวจสอบก่อนว่ายังมีช่องว่างให้วางการ์ดหรือไม่
                 const emptyCard = Array.from(cards).find(card => card.querySelector('.card-name').textContent === '');
 
-                if (emptyCard) {
-                    const randomIndex = Math.floor(Math.random() * availableAnimals.length);
-                    const selectedAnimal = availableAnimals[randomIndex];
-
-                    // ใส่ข้อมูลสัตว์ลงในการ์ดที่ว่าง
-                    emptyCard.querySelector('.card-name').textContent = selectedAnimal.name;
-                    emptyCard.querySelector('.power').textContent = selectedAnimal.power;
-
-                    // ลบสัตว์ที่สุ่มได้ออกจากอาร์เรย์ที่ใช้สุ่ม
-                    availableAnimals.splice(randomIndex, 1);
+                if (!emptyCard) {
+                    return; // ถ้าไม่มีช่องว่างก็ไม่ต้องสุ่ม
                 }
+
+                if (availableCards.length === 0) {
+                    return; // ถ้าไม่มีการ์ดเหลือให้สุ่มแล้วก็ไม่ต้องสุ่ม
+                }
+                
+                const randomIndex = Math.floor(Math.random() * availableCards.length);
+                const selectedCard = availableCards[randomIndex];
+
+                // ใส่ข้อมูลการ์ดลงในช่องว่าง
+                emptyCard.querySelector('.card-name').textContent = selectedCard.name;
+                emptyCard.querySelector('.power').textContent = selectedCard.power;
+
+                // ลบการ์ดที่สุ่มได้ออกจากลิสต์
+                availableCards.splice(randomIndex, 1);
                 
                 updateDrawButtonState();
             });
 
-            // --- ส่วนการลบไพ่เมื่อคลิกที่ช่อง ---
             cards.forEach(card => {
                 card.addEventListener('click', () => {
                     if (card.querySelector('.card-name').textContent !== '') {
@@ -315,13 +310,11 @@
                     const usedAnimalName = clickedCardElement.querySelector('.card-name').textContent;
                     const usedAnimalPower = clickedCardElement.querySelector('.power').textContent;
 
-                    // คืนสัตว์ที่ถูกลบไปกลับเข้าอาร์เรย์ `availableAnimals`
-                    const animalToReturn = { name: usedAnimalName, power: parseInt(usedAnimalPower) };
-                    availableAnimals.push(animalToReturn);
-                    
-                    // ล้างข้อมูลในการ์ด
+                    // ลบข้อมูลจากการ์ด
                     clickedCardElement.querySelector('.card-name').textContent = '';
                     clickedCardElement.querySelector('.power').textContent = '';
+
+                    // ไม่ต้องนำการ์ดกลับมาใน availableCards เพราะถือว่า "ใช้ไปแล้ว"
                 }
                 confirmationModal.style.display = 'none';
                 clickedCardElement = null;
